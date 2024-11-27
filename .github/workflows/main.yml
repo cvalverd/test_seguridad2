@@ -15,11 +15,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Paso 2: Instalar Docker y Docker Compose en el runner
-      - name: Install Docker and Docker Compose
-        run: |
-          sudo apt-get install -y docker.io docker-compose
-
       # Paso 3: Configurar clave SSH
       - name: Add SSH Key
         env:
@@ -37,7 +32,10 @@ jobs:
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
             ./ \
             ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }}:/home/ubuntu/donjose/
-
+      - name: SSH Instalar docker
+        run: | 
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
       # Paso 5: Comandos SSH para gestionar Docker en el servidor
       - name: SSH commands to deploy with Docker
         run: |
