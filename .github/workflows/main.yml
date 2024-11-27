@@ -1,0 +1,49 @@
+name: Deploy to Server with Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Paso 2: Instalar Docker y Docker Compose en el runner
+      - name: Install Docker and Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+
+      # Paso 3: Configurar clave SSH
+      - name: Add SSH Key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PASSWORD_SERVER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+
+      # Paso 4: Transferir archivos al servidor remoto
+      - name: Copy files to server
+        run: |
+          rsync -avz --delete --no-g \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            ./ \
+            ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }}:/home/ubuntu/donjose/
+
+      # Paso 5: Comandos SSH para gestionar Docker en el servidor
+      - name: SSH commands to deploy with Docker
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }} << 'EOF'
+          cd /home/ubuntu/donjose/prueba3-practica
+          docker compose down
+          docker compose up -d --build
+          EOF
