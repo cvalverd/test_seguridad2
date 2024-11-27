@@ -1,5 +1,5 @@
 name: Deploy to Server with Docker
- 
+  
 on:
   push:
     branches:
